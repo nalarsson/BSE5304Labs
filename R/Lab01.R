@@ -56,9 +56,9 @@ weather.chart <- ggplot(weather, aes(x=day)) +
   geom_line(aes(y=tmin), color=tmin.color, size=1.25) +
   geom_line(aes(y=tmax), color=tmax.color, size=1.25) +
   geom_line(aes(y=pr), color=pr.color, size=1.25) +
-  ggtitle("Daily Precipitation, Minimum Temperature, and Maximum Temperature near Frederick, MD") +
+  ggtitle("Daily Precipitation, Minimum Temperature, \nand Maximum Temperature near Frederick, MD") +
   xlab("Year") + 
-  scale_y_continuous(name="Tempeature (°C)",
+  scale_y_continuous(name="Temperature (°C)",
                      sec.axis=sec_axis(~., name="Precipitation (cm)")) +
   theme_ipsum() +
   theme(
@@ -67,5 +67,31 @@ weather.chart <- ggplot(weather, aes(x=day)) +
   )
 
 weather.chart
+pdf()
+dev.off()
+
 
 ## PROBLEM 2 CODE -----
+# call function from source
+source("https://goo.gl/Cb8zGn")
+
+myflowgage_id="01643000"
+myflowgage=get_usgs_gage(myflowgage_id,
+            begin_date="2016-02-01",end_date="2023-02-01")
+class(myflowgage)
+
+plot(myflowgage$flowdata$mdate,myflowgage$flowdata$flow,
+     main=myflowgage$gagename,xlab = "Date",
+     ylab="Flow m^3/day",type="l")
+
+conversion <- 24*60*60
+myflowgage$flowdata$flowcms <- myflowgage$flowdata$flow/conversion
+myflowgage$flowdata$flowdepth <- myflowgage$flowdata$flowcms/myflowgage$area*1000
+
+weatherandflow.chart <- weather.chart +
+  geom_line(myflowgage$flowdata, mapping=aes(x=mdate, y=flowdepth)) +
+  ggtitle("Daily Precipitation, Minimum Temperature, \n Maximum Temperature and Streamflow near Frederick, MD") +
+  scale_y_continuous(name="Temperature (°C)",
+                     sec.axis=sec_axis(~., name="Precipitation and Streamflow (cm)"))
+                                                                                      
+weatherandflow.chart
