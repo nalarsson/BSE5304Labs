@@ -1,0 +1,14 @@
+include $(R_HOME)/etc$(R_ARCH)/Makeconf
+#-*- Makefile -*-
+#
+DIRS	= SWAT2012
+MFLAGS	= -f Makefile.win
+all: swat12
+
+swat12:
+	cd SWAT2012 && $(MAKE) $(MFLAGS)
+
+clean :
+	-rm -f $(EXE) $(OBJS) $(OBJLIBS)
+	-for d in $(DIRS); do (cd $$d; rm -f *~ *.o *.exe *.so *.mod); done
+

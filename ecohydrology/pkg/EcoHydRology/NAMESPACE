@@ -1,0 +1,17 @@
+# Export all names
+exportPattern(".")
+
+# Import all packages listed as Imports or Depends
+import(
+  operators,
+  topmodel,
+  DEoptim,
+  rnoaa,
+  lubridate,
+  ggplot2,
+  XML
+)
+importFrom("graphics", "axis", "barplot", "lines", "mtext", "par", "plot")
+importFrom("stats", "na.omit", "quantile", "runif")
+importFrom("utils", "download.file", "read.csv", "read.delim", "read.fortran")
+
