@@ -30,7 +30,7 @@ mypdfdir=paste0(mygitdir,"/pdfs",LabNo)
 dir.create(mypdfdir)
 # 
 setwd(mygitdir)
-system("git config --global user.email 'nlarsson@vt.edu ") 
+system("git config --global user.email 'nlarsson@vt.edu' ") 
 system("git config --global user.name 'Natalie Larsson' ")
 system("git config pull.rebase false")
 #
@@ -385,24 +385,9 @@ TMWB=BasinData
 # First functions from last week we already have, Wetting, Drying, 
 # and Wetting above capacity 
 # 
-# soil wetting function
-soilwetting<-function(AWprev,dP_func,AWC_func){
-  AW_func<-AWprev+dP_func
-  excess_func<-0.0
-  c(AW_func,excess_func)
-} 
-# soil drying function
-soildrying<-function(AWprev,dP_func,AWC_func){
-  AW_func=AWprev*exp(dP_func/AWC_func)
-  excess_func<-0.0
-  c(AW_func,excess_func)
-}
-# soil_wetting_above_capacity function
-soil_wetting_above_capacity<-function(AWprev,dP_func,AWC_func){
-  AW_func<-AWC_func
-  excess_func<-AWprev+dP_func-AWC_func
-  c(AW_func,excess_func)
-}
+
+#insert github link
+source("https://github.com/nalarsson/BSE5304Labs/blob/main/R/Lab04/TMWBSoilFuncs.R")
 
 #
 # Lets make one out of our Temperature Index Snow Model
@@ -425,6 +410,7 @@ TISnow=function(WBData,SFTmp=2,bmlt6=4.5,bmlt12=0.0,Tmlt=3,Tlag=1){
   WBData$SNOfall = 0  # Snow Fall (mm)
   attach(WBData)
   for (t in 2:length(date)){
+    SNOmlt=0
     Tsno[t]= Tsno[t-1] * (1.0-Tlag) +  AvgTemp[t] * Tlag
     if(AvgTemp[t] < SFTmp){
       SNO[t]= SNO[t-1] + P[t]
