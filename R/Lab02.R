@@ -1,3 +1,4 @@
+#SETUP----
 Sys.getenv()
 Sys.getenv("HOME")
 myhomedir=Sys.getenv("HOME")
@@ -35,12 +36,13 @@ system("svn checkout svn://scm.r-forge.r-project.org/svnroot/ecohydrology/");
 install.packages(c("ecohydrology/pkg/EcoHydRology/"),repos = NULL)
 pacman::p_load(EcoHydRology)
 
+## Part 1 Brier Creek at Fanrock ------
 setwd(datadir)
-
-
-myflowgage_id="0205551460"
+##GET FLOWGAGE DATA
+myflowgage_id= "03202480"
 myflowgage=get_usgs_gage(myflowgage_id,begin_date = "2015-01-01",
                            end_date = "2019-01-01")
+myflowgage$area
 
 # For most watershed modelling purposes we normalize Q in mm/day for basins
 myflowgage$flowdata$Qmm = myflowgage$flowdata$flow/myflowgage$area/10^3
@@ -84,7 +86,7 @@ p1= ggplot(BasinData, aes(x=date)) +
 p1
 basestr=format(Sys.time(),"/%Y%m%d%H%M")
 filename=paste0(mypdfdir,basestr,"graph01.pdf")
-pdf(filename) 
+#pdf(filename) 
 plot(p1)
 dev.off()
 print("file size")
@@ -116,9 +118,10 @@ proj4string(myflowgage$gagepoint_ll)=proj4_ll
 myflowgage$gagepoint_utm=spTransform(myflowgage$gagepoint_ll,crs_utm)
 
 # Open up maps.google.com to guesstimate area/lengths
-url=paste0("https://www.google.com/maps/@",
-             myflowgage$declat,",",myflowgage$declon,",18z")
-browseURL(url)
+#url=paste0("https://www.google.com/maps/@",
+#             myflowgage$declat,",",myflowgage$declon,",18z")
+
+#browseURL(url)
 # We are going to over estimate our area
 sqrt(myflowgage$area)   # guestimating square watershed
 # For our search we are going to multiply the area by 6 and
@@ -134,9 +137,12 @@ bboxpts=rbind(bboxpts,c(min(bboxpts[,1]),max(bboxpts[,2])))
 bboxpts=rbind(bboxpts,c(max(bboxpts[,1]),min(bboxpts[,2])))
 bboxpts
 bboxpts=SpatialPoints(bboxpts,proj4string = crs_utm)
+
 # From Lab04, get your DEM
 mydem=get_aws_terrain(locations=bboxpts@coords, 
-                        z = 12, prj = proj4_utm,src ="aws",expand=1)
+                        z = 12, prj = proj4_utm,src ="aws",expand=1) #change resolution by changing z attribute --> higher value is more zoomed
+#start at lower res, get to approximately 3 mil cells
+
 res(mydem)
 plot(mydem)
 plot(bboxpts,add=T)
@@ -150,7 +156,7 @@ writeRaster(mydem,filename = "mydem.tif",overwrite=T)
 # dir; cd ; # Windows
 
 #does not work
-zoom(mydem)
+#zoom(mydem)
 
 #different zoom extents
 zoomext=myflowgage$gagepoint_utm@coords
@@ -171,14 +177,16 @@ plot(pourpoint,add=T,col="red")
 # # yes, this next line is very small font, but it is one line so...
 # sed -i -e 's/MPI_Type_extent(MPI_LONG, \&extent)/MPI_Aint lb\;MPI_Type_get_extent(MPI_LONG, \&lb, \&extent)/g' linklib.h
 # 
-rm("old_path")
-old_path <- Sys.getenv("PATH")
-old_path
-if(!grepl("~/src/TauDEM/bin",old_path)){
-  Sys.setenv(PATH = paste(old_path,
-                            paste0(Sys.getenv("HOME"),"/src/TauDEM/bin"), 
-                            sep = ":"))
-}
+
+
+# rm("old_path")
+# old_path <- Sys.getenv("PATH")
+# old_path
+# if(!grepl("~/src/TauDEM/bin",old_path)){
+#   Sys.setenv(PATH = paste(old_path,
+#                             paste0(Sys.getenv("HOME"),"/src/TauDEM/bin"), 
+#                             sep = ":"))
+# }
 
 system("mpirun aread8")
 
@@ -196,24 +204,24 @@ fel=raster("mydemfel.tif")
 plot(fel)
 
 # D8 flow directions
-system("mpiexec -n 2 d8flowdir -p mydem.tif -sd8 mydemsd8.tif -fel mydemfel.tif",show.output.on.console=F,invisible=F)
+system("mpiexec -n 2 d8flowdir -p mydemp.tif -sd8 mydemsd8.tif -fel mydemfel.tif",show.output.on.console=F,invisible=F)
 p=raster("mydemp.tif")
 plot(p)
 sd8=raster("mydemsd8.tif")
 plot(sd8)
 
 # Contributing area
-system("mpiexec -n 2 area8 -p mydemp.tif -ad8 mydemad8.tif")
+system("mpiexec -n 2 aread8 -p mydemp.tif -ad8 mydemad8.tif")
 ad8=raster("mydemad8.tif")
 plot(log(ad8))
-zoom(log(ad8))
+#zoom(log(ad8))
 
 
 # Grid Network 
 system("mpiexec -n 2 gridnet -p mydemp.tif -gord mydemgord.tif -plen mydemplen.tif -tlen mydemtlen.tif")
 gord=raster("mydemgord.tif")
 plot(gord)
-zoom(gord)
+#zoom(gord)
 
 # DInf flow directions
 system("mpiexec -n 2 dinfflowdir -ang mydemang.tif -slp mydemslp.tif -fel mydemfel.tif",show.output.on.console=F,invisible=F)
@@ -224,46 +232,44 @@ plot(slp)
 
 
 # Dinf contributing area
-system("mpiexec -n 2 AreaDinf -ang mydemang.tif -sca mydemsca.tif")
+system("mpiexec -n 2 areadinf -ang mydemang.tif -sca mydemsca.tif") #change to lowercase
 sca=raster("mydemsca.tif")
 plot(log(sca))
-zoom(log(sca))
+#zoom(log(sca))
 
 # Threshold
-system("mpiexec -n 2 Threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh 100")
+system("mpiexec -n 2 threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh 100")
 src=raster("mydemsrc.tif")
 plot(src)
-zoom(src)
+#zoom(src)
 
-# a quick R function to write a shapefile
-makeshape.r=function(sname="shape",n=1)
-{
-  xy=locator(n=n)
-  points(xy)
-  
-  #Point
-  dd <- data.frame(Id=1:n,X=xy$x,Y=xy$y)
-  ddTable <- data.frame(Id=c(1),Name=paste("Outlet",1:n,sep=""))
-  ddShapefile <- convert.to.shapefile(dd, ddTable, "Id", 1)
-  write.shapefile(ddShapefile, sname, arcgis=T)
-}
-
-makeshape.r("ApproxOutlets")
+outlet=SpatialPointsDataFrame(myflowgage$gagepoint_utm,
+                                data.frame(Id=c(1),outlet=paste("outlet",1,sep="")))
+writeOGR(outlet,dsn=".",layer="approxoutlets",
+           driver="ESRI Shapefile", overwrite_layer=TRUE)
+#
 
 # Move Outlets
-system("mpiexec -n 2 moveoutletstostreams -p mydemp.tif -src mydemsrc.tif -o approxoutlets.shp -om Outlet.shp")
-outpt=read.shp("outlet.shp")
-approxpt=read.shp("ApproxOutlets.shp")
+system("mpiexec -n 2 moveoutletstostrm -p mydemp.tif -src mydemsrc.tif -o approxoutlets.shp -om outlet.shp")
+
+approxpt <- readOGR("approxoutlets.shp")
+plot(approxpt,add=TRUE,col="blue")
+outpt <- readOGR("outlet.shp")
+plot(outpt,add=TRUE,col="red")
+
+#not needed
+#outpt=read.shp("outlet.shp")
+#approxpt=read.shp("ApproxOutlets.shp")
 
 plot(src)
 points(outpt$shp[2],outpt$shp[3],pch=19,col=2)
 points(approxpt$shp[2],approxpt$shp[3],pch=19,col=4)
 
-zoom(src)
+#zoom(src)
 
 
 # Contributing area upstream of outlet
-system("mpiexec -n 2 Aread8 -p mydemp.tif -o Outlet.shp -ad8 mydemssa.tif")
+system("mpiexec -n 2 aread8 -p mydemp.tif -o outlet.shp -ad8 mydemssa.tif")
 ssa=raster("mydemssa.tif")
 plot(ssa) 
 
@@ -272,14 +278,234 @@ plot(ssa)
 system("mpiexec -n 2 threshold -ssa mydemssa.tif -src mydemsrc1.tif -thresh 2000")
 src1=raster("mydemsrc1.tif")
 plot(src1)
-zoom(src1)
+#zoom(src1)
 
 # Stream Reach and Watershed
-system("mpiexec -n 2 Streamnet -fel mydemfel.tif -p mydemp.tif -ad8 mydemad8.tif -src mydemsrc1.tif -o outlet.shp -ord mydemord.tif -tree mydemtree.txt -coord mydemcoord.txt -net mydemnet.shp -w mydemw.tif")
+system("mpiexec -n 2 streamnet -fel mydemfel.tif -p mydemp.tif -ad8 mydemad8.tif -src mydemsrc1.tif -o outlet.shp -ord mydemord.tif -tree mydemtree.txt -coord mydemcoord.txt -net mydemnet.shp -w mydemw.tif")
 plot(raster("mydemord.tif"))
-zoom(raster("mydemord.tif"))
+#zoom(raster("mydemord.tif"))
 plot(raster("mydemw.tif"))
 
 
+#Subtract Raster
+setwd("~/2023/BSE5304Labs02/pdfs")
+diffrast=fel-z
+pdf("DifferenceRasterEx.pdf")
+plot(diffrast)
+dev.off()
 
+#Print filled DEM raster
+pdf("FilledDEMEx.pdf")
+plot(z)
+dev.off()
+
+## Part 2 StTREAM Lab in Blacksburg, VA ----------
+SL.area.sqmi <- 5.58 #sq miles
+SL.area <- 5.58*2.58999
+SL.lat <- 37.210126 
+SL.lon <- -80.445105 
+
+
+trunc((180+SL.lon)/6+1)
+proj4_utm = paste0("+proj=utm +zone=", trunc((180+SL.lon)/6+1), " +datum=WGS84 +units=m +no_defs")
+print(proj4_utm)
+
+# Lat/Lon (_ll) is much easier!
+proj4_ll = "+proj=longlat"
+
+# Now we will build our proj4strings which define our “Coordinate 
+# Reference Systems” or CRS in future geographic manipulations. 
+crs_ll=CRS(proj4_ll)
+crs_utm=CRS(proj4_utm)
+print(crs_ll)
+print(crs_utm)
+
+SL.area  # area in km2
+
+latlon <- cbind(SL.lon,SL.lat)
+SL_ll <- SpatialPoints(latlon)
+proj4string(SL_ll)=proj4_ll
+SL_gagepoint_utm=spTransform(SL_ll,crs_utm)
+
+# Open up maps.google.com to guesstimate area/lengths
+#url=paste0("https://www.google.com/maps/@",
+#             myflowgage$declat,",",myflowgage$declon,",18z")
+
+#browseURL(url)
+# We are going to over estimate our area
+sqrt(SL.area)   # guestimating square watershed
+# For our search we are going to multiply the area by 6 and
+# to get the distance
+sqrt(SL.area*8)
+searchlength=sqrt(SL.area*8)*1000
+
+pourpoint=SpatialPoints(SL_gagepoint_utm@coords,proj4string = crs_utm)
+bboxpts=SL_gagepoint_utm@coords
+bboxpts=rbind(bboxpts,bboxpts+searchlength)
+bboxpts=rbind(bboxpts,bboxpts-searchlength)
+bboxpts
+bboxpts=rbind(bboxpts,c(min(bboxpts[,1]),max(bboxpts[,2])))
+bboxpts=rbind(bboxpts,c(max(bboxpts[,1]),min(bboxpts[,2])))
+bboxpts
+bboxpts=SpatialPoints(bboxpts,proj4string = crs_utm)
+
+# From Lab04, get your DEM
+mydem=get_aws_terrain(locations=bboxpts@coords, 
+                      z = 12, prj = proj4_utm,src ="aws",expand=1) #change resolution by changing z attribute --> higher value is more zoomed
+#start at lower res, get to approximately 3 mil cells
+
+res(mydem)
+plot(mydem)
+plot(bboxpts,add=T)
+plot(pourpoint,add=T,col="red")
+
+# Write our raster to a geotiff file that can be used with
+# OS level hydrological models 
+writeRaster(mydem,filename = "mydem.tif",overwrite=T)
+# Our quick intro to terminal where the cloud offerings are usually Linux
+# ls; cd ~; pwd;  # Linux/Mac 
+# dir; cd ; # Windows
+
+#does not work
+#zoom(mydem)
+
+#different zoom extents
+zoomext=SL_gagepoint_utm@coords
+zoomext=rbind(zoomext,zoomext+res(mydem)*100)
+zoomext=rbind(zoomext,zoomext-res(mydem)*100)
+zoomext=SpatialPoints(zoomext,proj4string = crs_utm)  
+zoom(mydem,ext=zoomext)
+plot(bboxpts,add=T)
+plot(pourpoint,add=T,col="red")
+
+# cd ~/src/      # Set your directory to your home directory
+# git clone https://github.com/dtarb/TauDEM.git
+# mkdir ~/src/TauDEM/bin
+# cd ~/src/TauDEM/src
+# make
+
+# sed -i -e 's/MPI_Type_struct/MPI_Type_create_struct/g' linklib.h
+# # yes, this next line is very small font, but it is one line so...
+# sed -i -e 's/MPI_Type_extent(MPI_LONG, \&extent)/MPI_Aint lb\;MPI_Type_get_extent(MPI_LONG, \&lb, \&extent)/g' linklib.h
+# 
+
+
+# rm("old_path")
+# old_path <- Sys.getenv("PATH")
+# old_path
+# if(!grepl("~/src/TauDEM/bin",old_path)){
+#   Sys.setenv(PATH = paste(old_path,
+#                             paste0(Sys.getenv("HOME"),"/src/TauDEM/bin"), 
+#                             sep = ":"))
+# }
+
+system("mpirun aread8")
+
+
+## Code from TauDEMR.txt
+# Set working directory to your location
+setwd(datadir)
+
+z=raster("mydem.tif")
+plot(z)
+
+# Pitremove
+system("mpiexec -n 2 pitremove -z mydem.tif -fel mydemfel.tif")
+fel=raster("mydemfel.tif")
+plot(fel)
+
+# D8 flow directions
+system("mpiexec -n 2 d8flowdir -p mydemp.tif -sd8 mydemsd8.tif -fel mydemfel.tif",show.output.on.console=F,invisible=F)
+p=raster("mydemp.tif")
+plot(p)
+sd8=raster("mydemsd8.tif")
+plot(sd8)
+
+# Contributing area
+system("mpiexec -n 2 aread8 -p mydemp.tif -ad8 mydemad8.tif")
+ad8=raster("mydemad8.tif")
+plot(log(ad8))
+#zoom(log(ad8))
+
+
+# Grid Network 
+system("mpiexec -n 2 gridnet -p mydemp.tif -gord mydemgord.tif -plen mydemplen.tif -tlen mydemtlen.tif")
+gord=raster("mydemgord.tif")
+plot(gord)
+#zoom(gord)
+
+# DInf flow directions
+system("mpiexec -n 2 dinfflowdir -ang mydemang.tif -slp mydemslp.tif -fel mydemfel.tif",show.output.on.console=F,invisible=F)
+ang=raster("mydemang.tif")
+plot(ang)
+slp=raster("mydemslp.tif")
+plot(slp)
+
+
+# Dinf contributing area
+system("mpiexec -n 2 areadinf -ang mydemang.tif -sca mydemsca.tif") #change to lowercase
+sca=raster("mydemsca.tif")
+plot(log(sca))
+#zoom(log(sca))
+
+# Threshold
+system("mpiexec -n 2 threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh 100")
+src=raster("mydemsrc.tif")
+plot(src)
+#zoom(src)
+
+outlet=SpatialPointsDataFrame(myflowgage$gagepoint_utm,
+                              data.frame(Id=c(1),outlet=paste("outlet",1,sep="")))
+writeOGR(outlet,dsn=".",layer="approxoutlets",
+         driver="ESRI Shapefile", overwrite_layer=TRUE)
+#
+
+# Move Outlets
+system("mpiexec -n 2 moveoutletstostrm -p mydemp.tif -src mydemsrc.tif -o approxoutlets.shp -om outlet.shp")
+
+approxpt <- readOGR("approxoutlets.shp")
+plot(approxpt,add=TRUE,col="blue")
+outpt <- readOGR("outlet.shp")
+plot(outpt,add=TRUE,col="red")
+
+#not needed
+#outpt=read.shp("outlet.shp")
+#approxpt=read.shp("ApproxOutlets.shp")
+
+plot(src)
+points(outpt$shp[2],outpt$shp[3],pch=19,col=2)
+points(approxpt$shp[2],approxpt$shp[3],pch=19,col=4)
+
+#zoom(src)
+
+
+# Contributing area upstream of outlet
+system("mpiexec -n 2 aread8 -p mydemp.tif -o outlet.shp -ad8 mydemssa.tif")
+ssa=raster("mydemssa.tif")
+plot(ssa) 
+
+
+# Threshold
+system("mpiexec -n 2 threshold -ssa mydemssa.tif -src mydemsrc1.tif -thresh 2000")
+src1=raster("mydemsrc1.tif")
+plot(src1)
+#zoom(src1)
+
+# Stream Reach and Watershed
+system("mpiexec -n 2 streamnet -fel mydemfel.tif -p mydemp.tif -ad8 mydemad8.tif -src mydemsrc1.tif -o outlet.shp -ord mydemord.tif -tree mydemtree.txt -coord mydemcoord.txt -net mydemnet.shp -w mydemw.tif")
+plot(raster("mydemord.tif"))
+#zoom(raster("mydemord.tif"))
+plot(raster("mydemw.tif"))
+
+#Subtract Raster
+setwd("~/2023/BSE5304Labs02/pdfs")
+diffrast=fel-z
+pdf("DifferenceRasterSL.pdf")
+plot(diffrast)
+dev.off()
+
+#Print filled DEM raster
+pdf("FilledDEMSL.pdf")
+plot(z)
+dev.off()
 
