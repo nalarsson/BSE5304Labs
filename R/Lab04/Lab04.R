@@ -38,7 +38,7 @@ system("git config pull.rebase false")
 # re-installing the EcoHydrology Library necessary.
 #
 setwd(srcdir)
-detach("package:EcoHydRology", unload = TRUE)
+#detach("package:EcoHydRology", unload = TRUE)
 remove.packages("EcoHydRology", lib="~/R/x86_64-pc-linux-gnu-library/4.2")
 system("svn checkout svn://scm.r-forge.r-project.org/svnroot/ecohydrology/"); 
 install.packages(c("ecohydrology/pkg/EcoHydRology/"),repos = NULL)
@@ -388,7 +388,12 @@ TMWB=BasinData
 
 #insert github link
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBSoilFuncs.R")
+source("https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/TISnow.R")
 #
+
+NSE=function(Yobs,Ysim){
+  return(1-sum((Yobs-Ysim)^2,na.rm=TRUE)/sum((Yobs-mean(Yobs, na.rm=TRUE))^2, na.rm=TRUE))
+}
 # Lets make one out of our Temperature Index Snow Model
 #
 
@@ -400,13 +405,13 @@ Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
 
 
 
-
+attach(TMWB)
 SNO_df=TISnow(TMWB)
 TMWB$SNO=SNO_df$SNO
 TMWB$SNOmlt=SNO_df$SNOmlt
 TMWB$SNOfall=SNO_df$SNOfall
 TMWB$Tsno=SNO_df$Tsno
-detach(TMWB)
+
 #
 # Our PET Model we will borrow from EcoHydrology
 #
@@ -415,6 +420,9 @@ TMWB$PET=PET_fromTemp(Jday=(1+as.POSIXlt(date)$yday),Tmax_C = MaxTemp,Tmin_C = M
                       lat_radians = myflowgage$declat*pi/180) * 1000
 plot(date,TMWB$PET)
 
+
+
+detach(TMWB)
 
 # Our TMWB Model
 
@@ -546,11 +554,14 @@ TMWB$Qpred=Qpred # UPDATE vector BEFORE DETACHING
 detach(TMWB) # IMPORTANT TO DETACH
 rm(list=c("Qpred","S"))
 
+attach(TMWB)
 #Make a plot that has Qmm, P,and Qpred over time
 plot(TMWB$date,P,col="black")
 lines(date,Qmm,type = "l",col="black")
 lines(date,Qpred,col="blue")
+plot(TMWB$Qmm,TMWB$Qpred)
 
+detach(TMWB)
 #
 # Functionalizing big big big time
 # Here is a great place to make this into a function!
