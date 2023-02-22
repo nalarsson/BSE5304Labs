@@ -94,9 +94,9 @@ myflowgage$gagepoint_ll <- SpatialPoints(latlon)
 proj4string(myflowgage$gagepoint_ll)=proj4_ll
 myflowgage$gagepoint_utm=spTransform(myflowgage$gagepoint_ll,crs_utm)
 # Open up maps.google.com to guesstimate area/lengths
-url=paste0("https://www.google.com/maps/@",
-           myflowgage$declat,",",myflowgage$declon,",18z")
-browseURL(url)
+# url=paste0("https://www.google.com/maps/@",
+#            myflowgage$declat,",",myflowgage$declon,",18z")
+# browseURL(url)
 # We are going to over estimate our area
 # For our search we are going to multiply the area by 6 and
 # to get the distance
@@ -318,7 +318,7 @@ co2ch = SDA_query(q_co2ch)
 # Last, bring them back together, and aggregate based on max values
 # of ksat_r,awc_r, and hzdepb_r
 mu2ch=merge(mu2co,co2ch)
-View(mu2ch)
+#View(mu2ch)
 summary(mu2ch)
 mu2chmax=aggregate(mu2ch,list(mu2ch$mukey),max)
 summary(mu2chmax)   	# What should we do with NAs?
@@ -377,10 +377,9 @@ plot(TIC_terra)
 # Building more complex functions
 # 
 
-
-
-
-
+NSE=function(Yobs,Ysim){
+  return(1-sum((Yobs-Ysim)^2,na.rm=TRUE)/sum((Yobs-mean(Yobs, na.rm=TRUE))^2, na.rm=TRUE))
+}
 TMWB=BasinData
 #
 # Our model will
@@ -399,9 +398,7 @@ source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMW
 source("https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/TISnow.R")
 #
 
-NSE=function(Yobs,Ysim){
-  return(1-sum((Yobs-Ysim)^2,na.rm=TRUE)/sum((Yobs-mean(Yobs, na.rm=TRUE))^2, na.rm=TRUE))
-}
+
 # Lets make one out of our Temperature Index Snow Model
 #
 
@@ -412,9 +409,11 @@ Tmlt = SFTmp  # Assumed to be same as SnowFall Temperature
 Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
 
 
+TISnow(TMWB,SFTmp=2,bmlt6=4.5,bmlt12=0.0,Tmlt=3,Tlag=1)
+#   
 
 attach(TMWB)
-SNO_df=TISnow(TMWB, d)
+SNO_df=TISnow(TMWB, SFTemp=6)
 TMWB$SNO=SNO_df$SNO
 TMWB$SNOmlt=SNO_df$SNOmlt
 TMWB$SNOfall=SNO_df$SNOfall
@@ -423,19 +422,20 @@ TMWB$Tsno=SNO_df$Tsno
 #
 # Our PET Model we will borrow from EcoHydrology
 #
-?PET_fromTemp
+#?PET_fromTemp
 TMWB$PET=PET_fromTemp(Jday=(1+as.POSIXlt(date)$yday),Tmax_C = MaxTemp,Tmin_C = MinTemp,
                       lat_radians = myflowgage$declat*pi/180) * 1000
 plot(date,TMWB$PET)
 
 
 
-detach(TMWB)
+
+#Still having issues with snow accumulation. Check later.
 
 # Our TMWB Model
-
-attach(TMWB)
 detach(TMWB)
+#attach(TMWB)
+
 
 
 TMWB$ET = TMWB$PET # in mm/day
@@ -629,5 +629,14 @@ detach(BasinTMWB_JO)
 #
 # What is the optimum value of Sest and the corresponding NSE?
 #
+
+CNmodeldf1 = BasinData
+CNavg = 75
+IaFrac = 0.05
+fnc_slope=0 
+fnc_aspect=0
+func_DAWC=.3
+func_z=1000
+fnc_fcres=.3
 
 

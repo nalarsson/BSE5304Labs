@@ -5,16 +5,9 @@
 # trim to just be what is needed!! only a function, no inputs
 
 
-CNmodeldf = BasinData
-CNavg = 75
-IaFrac = 0.05
-fnc_slope=0 
-fnc_aspect=0
-func_DAWC=.3
-func_z=1000
-fnc_fcres=.3
 
-CNModel = function( ) {
+
+CNModel = function(CNmodeldf ) {
 
 
 # Energy Balance based Snow Accumulation 

@@ -4,7 +4,7 @@
 #Tmlt = SFTmp  # Assumed to be same as SnowFall Temperature
 #Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
 
-TISnow=function(WBData,SFTmp=2,bmlt6=4.5,bmlt12=0.0,Tmlt=3,Tlag=1){
+TISnow=function(WBData,SFTmp,bmlt6,bmlt12,Tmlt,Tlag){
   #WBData=TMWB
   #SFTmp = 3  # referred to as SFTMP in SWAT input (Table 1)
   #bmlt6 = 4.5   # referred to as SMFMX in SWAT input (Table 1)
