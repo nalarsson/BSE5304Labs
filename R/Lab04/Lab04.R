@@ -395,7 +395,7 @@ TMWB=BasinData
 ### NEW GITHUB READIN
 #insert github link
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBSoilFuncs.R")
-source("https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/TISnow.R")
+source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TISnow.R")
 #
 
 
@@ -413,30 +413,32 @@ TISnow(TMWB,SFTmp=2,bmlt6=4.5,bmlt12=0.0,Tmlt=3,Tlag=1)
 #   
 
 attach(TMWB)
-SNO_df=TISnow(TMWB, SFTemp=6)
+SNO_df=TISnow(TMWB, SFTmp=6)
 TMWB$SNO=SNO_df$SNO
 TMWB$SNOmlt=SNO_df$SNOmlt
 TMWB$SNOfall=SNO_df$SNOfall
 TMWB$Tsno=SNO_df$Tsno
+detach(TMWB)
 
 #
 # Our PET Model we will borrow from EcoHydrology
 #
+attach(TMWB)
 #?PET_fromTemp
 TMWB$PET=PET_fromTemp(Jday=(1+as.POSIXlt(date)$yday),Tmax_C = MaxTemp,Tmin_C = MinTemp,
                       lat_radians = myflowgage$declat*pi/180) * 1000
 plot(date,TMWB$PET)
-
+detach(TMWB)
 
 
 
 #Still having issues with snow accumulation. Check later.
 
 # Our TMWB Model
-detach(TMWB)
+
 #attach(TMWB)
 
-
+TMWBModel = function(fcres=.3, )
 
 TMWB$ET = TMWB$PET # in mm/day
 TMWB$AWC=(0.45-0.15)*1000 #Fld Cap = .45, Wilt Pt = .15, z=1000mm
@@ -565,12 +567,12 @@ rm(list=c("Qpred","S"))
 attach(TMWB)
 #Make a plot that has Qmm, P,and Qpred over time
 plot(TMWB$date,P,col="black")
-lines(date,Qmm,type = "l",col="black")
+lines(date,Qmm,type = "l",col="red")
 lines(date,Qpred,col="blue")
 plot(TMWB$Qmm,TMWB$Qpred)
 detach(TMWB)
 #
-
+NSE(TMWB$Qmm,TMWB$Qpred)
 
 
 ### END OF HW 3 SOLUTION
