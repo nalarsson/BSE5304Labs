@@ -337,6 +337,9 @@ soilmap$hzdepb_r[is.na(soilmap$hzdepb_r)]=mean(soilmap$hzdepb_r,na.rm=T)
 
 
 
+
+
+
 par(mfrow=c(1,1))
 # Lab 04 TI 
 slp=raster("mydemslp.tif")
@@ -374,6 +377,10 @@ plot(TIC_terra)
 # Building more complex functions
 # 
 
+
+
+
+
 TMWB=BasinData
 #
 # Our model will
@@ -386,6 +393,7 @@ TMWB=BasinData
 # and Wetting above capacity 
 # 
 
+### NEW GITHUB READIN
 #insert github link
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBSoilFuncs.R")
 source("https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/TISnow.R")
@@ -406,7 +414,7 @@ Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
 
 
 attach(TMWB)
-SNO_df=TISnow(TMWB)
+SNO_df=TISnow(TMWB, d)
 TMWB$SNO=SNO_df$SNO
 TMWB$SNOmlt=SNO_df$SNOmlt
 TMWB$SNOfall=SNO_df$SNOfall
@@ -560,10 +568,66 @@ plot(TMWB$date,P,col="black")
 lines(date,Qmm,type = "l",col="black")
 lines(date,Qpred,col="blue")
 plot(TMWB$Qmm,TMWB$Qpred)
-
 detach(TMWB)
 #
+
+
+
+### END OF HW 3 SOLUTION
+
+
+
+######
+
 # Functionalizing big big big time
 # Here is a great place to make this into a function!
 # return(TMWB)
+
+
+(1000/85-10)*25.4   # our CN estimate in bold
+#[1] 44.82353
+(1000/50-10)*25.4   # our CN estimate in bold
+#[1] 254
+#
+# So we are going to visually "guestimate" that S should be somewhere between 
+# 45mm and 260mm… repeat plotting until your solution covers the 
+# largest Qmm vs dP event (upper right hand corner of plot). 
+# 
+
+# Assuming that (P-Ia) ~ dP, we can visually compare 
+attach(BasinTMWB_JO)
+plot(dP,Qmm)
+points(dP,dP^2/(dP+45),col="red")  # S guestimates in bold
+points(dP,dP^2/(dP+260),col="blue")# S guestimates in bold
+
+# Now perform a “Calibration” using our method from Lab3 and the NSE
+# as the “Objective Function”.  
+#
+# Vary S to maximize NSE using Eq. 4 of Lyon 2004 as our predictor of Q
+#   Qpred=dP^2/(dP+S)
+#
+NSE(Qmm,dP^2/(dP+260))
+# [1] 0.02375528
+  NSE(Qmm,dP^2/(dP+45))
+
+#
+# Keep iterating until NSE is as high as you can get for your 
+# best estimate to S (Sest)
+#
+f <- function (x) {
+  Sest=x
+  NSE(Qmm,dP^2/(dP+Sest))
+}
+optimize(f, c(50,500), tol = 0.0001,maximum = TRUE)$maximum
+Sest="WHAT?"
+plot(dP,Qmm)
+points(dP,dP^2/(dP+Sest),col="red") 
+########
+detach(BasinTMWB_JO)
+
+
+#
+# What is the optimum value of Sest and the corresponding NSE?
+#
+
 
