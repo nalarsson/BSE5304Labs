@@ -1,7 +1,4 @@
-# 
-# Since everything depends on the libraries you install
-# it is worthwhile loading them at the beginning
-#
+#SETUP -----
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(ggplot2,dplyr,patchwork,rnoaa)
 pacman::p_load(operators,topmodel,DEoptim,soilDB,sp,curl,httr,
@@ -46,11 +43,10 @@ pacman::p_load(EcoHydRology)
 
 setwd(datadir)
 
-#
-# Should we do a gage that is easy, or deal with some reality?
-#
-myflowgage_id="0205551460"  # Old Friendly Gage
-myflowgage_id="14216500"    # Most Frustrating Gage... lets do it!
+#GET FLOW GAGE DATA -----
+myflowgage_id="04288225" # W BRANCH LITTLE R ABV BINGHAM FALLS NEAR STOWE, VT, 44.5 lat # "0205551460" example from class
+#myflowgage_id="0205551460"  # Old Friendly Gage
+#myflowgage_id="14216500"    # Most Frustrating Gage... lets do it!
 myflowgage=get_usgs_gage(myflowgage_id,begin_date = "2015-01-01",
                          end_date = "2022-03-01")
 
@@ -163,6 +159,7 @@ if( ! grepl("~/src/TauDEM/bin",old_path)){
                           sep = ":"))
 }
 
+# WATERSHED DELINIATION CODE
 system("mpirun aread8")
 
 setwd(datadir)
@@ -172,7 +169,7 @@ plot(z)
 # Pitremove
 system("mpiexec -n 2 pitremove -z mydem.tif -fel mydemfel.tif")
 fel=raster("mydemfel.tif")
-plot(fel-z)
+plot(fel) #-z)
 
 
 # D8 flow directions
@@ -208,21 +205,11 @@ sca=raster("mydemsca.tif")
 plot(log(sca))
 zoom(log(sca),ext=zoomext2)
 
-#do for ever unique basin
-targetbasins=3  # Lets figure out some number of sub basins we want
-# to break this into
-res(mydem)      # Cell Resolution in meters
-myflowgage$area # Area in km^2
-myflowgage$area * 10^3 * 10^3 / res(mydem)[1]^2 / targetbasins #number of pixels in basin/target number basins
-subthreshold=myflowgage$area * 10^3 * 10^3 / res(mydem)[1]^2 / targetbasins
-subthreshold=as.integer(subthreshold) #updated to run for new basin areas
-# Threshold - make smaller for perennial streams??
-syscmd=paste0("mpiexec -n 2 threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh ",subthreshold)
-system(syscmd)
+# Threshold
+system("mpiexec -n 2 threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh 8000")
 src=raster("mydemsrc.tif")
 plot(src)
 zoom(src,ext=zoomext2)
-plot(pourpoint,add=T)
 
 outlet=SpatialPointsDataFrame(myflowgage$gagepoint_utm,
                               data.frame(Id=c(1),outlet=paste("outlet",1,sep="")))
@@ -232,6 +219,7 @@ writeOGR(outlet,dsn=".",layer="approxoutlets",
 
 # Move Outlets
 system("mpiexec -n 2 moveoutletstostrm -p mydemp.tif -src mydemsrc.tif -o approxoutlets.shp -om outlet.shp")
+zoom(src,ext=zoomext2)
 
 approxpt=readOGR("approxoutlets.shp")
 plot(approxpt,add=T, col="blue")
@@ -240,27 +228,26 @@ plot(outpt,add=T, col="red")
 
 # Contributing area upstream of outlet
 # Now that we know the location of an outlet, we can isolate our basin 
-#
+
+
+
 system("mpiexec -n 2 aread8 -p mydemp.tif -o outlet.shp -ad8 mydemssa.tif")
 ssa=raster("mydemssa.tif")
 plot(ssa) 
+zoom(ssa,ext=zoomext2)
 
 # Threshold
-system("mpiexec -n 2 threshold -ssa mydemssa.tif -src mydemsrc1.tif -thresh 2000")
-syscmd=paste0("mpiexec -n 2 threshold -ssa mydemssa.tif -src mydemsrc1.tif -thresh ",subthreshold)
-system(syscmd)
+system("mpiexec -n 2 threshold -ssa mydemssa.tif -src mydemsrc1.tif -thresh 8000")
 src1=raster("mydemsrc1.tif")
 plot(src1)
-zoom(src1,ext=zoomext)
+zoom(src1,ext=zoomext2)
 
 # Stream Reach and Watershed
 system("mpiexec -n 2 streamnet -fel mydemfel.tif -p mydemp.tif -ad8 mydemad8.tif -src mydemsrc1.tif -o outlet.shp -ord mydemord.tif -tree mydemtree.txt -coord mydemcoord.txt -net mydemnet.shp -w mydemw.tif")
 plot(raster("mydemord.tif"))
 zoom(raster("mydemord.tif"),ext=zoomext2)
-mydemw=raster("mydemw.tif")
-zoom(mydemw,ext=zoomext)
-summary(mydemw)
-plot(mydemw)
+plot(raster("mydemw.tif"),ext=zoomext2)
+
 
 # Trimming, Cropping, and Masking to make life prettier and easier
 mydemw=raster("mydemw.tif")
@@ -269,6 +256,7 @@ mydem=raster("mydem.tif")
 mybasindem=crop(mydem,mybasinmask)
 mybasindem=mask(mybasindem,mybasinmask)
 plot(mybasindem)
+
 
 # Make a poly with raster library (slow)
 # or from thee command line gdal (fast)
@@ -380,7 +368,7 @@ plot(TIC_terra)
 NSE=function(Yobs,Ysim){
   return(1-sum((Yobs-Ysim)^2,na.rm=TRUE)/sum((Yobs-mean(Yobs, na.rm=TRUE))^2, na.rm=TRUE))
 }
-TMWB=BasinData
+
 #
 # Our model will
 # 1) Calculate PET for the basin via Function
@@ -396,19 +384,20 @@ TMWB=BasinData
 #insert github link
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBSoilFuncs.R")
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TISnow.R")
+source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBModel.R")
 #
 
 
 # Lets make one out of our Temperature Index Snow Model
 #
 
-SFTmp = 3  # referred to as SFTMP in SWAT input (Table 1)
-bmlt6 = 4.5   # referred to as SMFMX in SWAT input (Table 1)
-bmlt12 = 0.0  # referred to as SMFMN in SWAT input adjusted for season
-Tmlt = SFTmp  # Assumed to be same as SnowFall Temperature
-Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
+# SFTmp = 3  # referred to as SFTMP in SWAT input (Table 1)
+# bmlt6 = 4.5   # referred to as SMFMX in SWAT input (Table 1)
+# bmlt12 = 0.0  # referred to as SMFMN in SWAT input adjusted for season
+# Tmlt = SFTmp  # Assumed to be same as SnowFall Temperature
+# Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
 
-
+TMWB=BasinData
 TISnow(TMWB,SFTmp=2,bmlt6=4.5,bmlt12=0.0,Tmlt=3,Tlag=1)
 #   
 
@@ -440,18 +429,31 @@ detach(TMWB)
 
 
 #
-NSE(TMWB$Qmm,TMWB$Qpred)
 
-
-### END OF HW 3 SOLUTION
-
-
-
-######
 
 # Functionalizing big big big time
 # Here is a great place to make this into a function!
 # return(TMWB)
+
+
+#
+# We know that our systems behave differently during snowy winter
+# months, so we will isolate our June ( month>5) - October ( < 11 ) data (_JO)
+# The library lubridate is handy here as it gives us a function "month"
+# and later on we will find library data.table handy, so will load it here
+TMWBnew=TMWBModel(TMWB)
+BasinTMWB_JO=TMWBnew[(month(TMWBnew$date) > 5 
+                      & month(TMWBnew$date) < 11),]
+attach(BasinTMWB_JO)
+plot(dP,Qmm)
+detach(BasinTMWB_JO)
+
+
+TMWBcalibrate=TMWBModel(BasinTMWB_JO, FldCap = .2)
+NSE(TMWBcalibrate$Qmm,TMWBcalibrate$Qpred)
+
+
+### CURVE NUMBER STUFF -----
 
 
 (1000/85-10)*25.4   # our CN estimate in bold
@@ -509,4 +511,5 @@ func_DAWC=.3
 func_z=1000
 fnc_fcres=.3
 
-
+source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/CNModel.R")
+CNModel(CNmodeldf1)
