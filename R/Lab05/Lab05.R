@@ -41,6 +41,7 @@ system("git config --global user.email 'nlarsson@vt.edu' ")
 system("git config --global user.name 'Natalie Larsson' ")
 system("git config pull.rebase false")
 #how did I blow this up???
+#help me
 #
 # This week, we discovered some "features" that make removing and 
 # re-installing the EcoHydrology Library necessary.
