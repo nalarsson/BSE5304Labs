@@ -37,9 +37,10 @@ mypdfdir=paste0(mygitdir,"/pdfs",LabNo)
 dir.create(mypdfdir)
 # 
 setwd(mygitdir)
-system("git config --global user.email 'drfuka@vt.edu' ") 
-system("git config --global user.name 'Daniel Fuka' ")
+system("git config --global user.email 'nlarsson@vt.edu' ") 
+system("git config --global user.name 'Natalie Larsson' ")
 system("git config pull.rebase false")
+#how did I blow this up???
 #
 # This week, we discovered some "features" that make removing and 
 # re-installing the EcoHydrology Library necessary.
