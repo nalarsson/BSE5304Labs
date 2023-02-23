@@ -449,7 +449,7 @@ plot(dP,Qmm)
 detach(BasinTMWB_JO)
 
 
-TMWBcalibrate=TMWBModel(BasinTMWB_JO, FldCap = .2)
+TMWBcalibrate=TMWBModel(BasinTMWB_JO, WiltPt = .05, Fld = .5, Z=300)
 NSE(TMWBcalibrate$Qmm,TMWBcalibrate$Qpred)
 
 
