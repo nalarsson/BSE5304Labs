@@ -1,6 +1,5 @@
 TMWBModel = function(TMWBdf,fcres=.3,FldCap=.45,WiltPt=.15,Z=1000) {
 
-  
 TMWBdf$ET = TMWBdf$PET # in mm/day
 TMWBdf$AWC=(0.45-0.15)*1000 #Fld Cap = .45, Wilt Pt = .15, z=1000mm
 TMWBdf$dP = TMWBdf$P-TMWBdf$ET -TMWBdf$SNO + TMWBdf$SNOmlt 
@@ -69,7 +68,7 @@ legend("topright", c("Qmm(mm)", "Qpred(mm)"), col = c("black", "blue"),
        lty = 1:2, cex = 0.8)
 
 
-TMWBdf$AWC=(myflowgage$FldCap-myflowgage$WiltPt)*myflowgage$Z # 
+TMWBdf$AWC=(FldCap-WiltPt)*Z # 
 TMWBdf$dP = 0 # Initializing Net Precipitation
 TMWBdf$ET = 0 # Initializing ET
 TMWBdf$AW = 0 # Initializing AW
