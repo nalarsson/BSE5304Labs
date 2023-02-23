@@ -1,7 +1,7 @@
 TMWBModel = function(TMWBdf,fcres=.3,FldCap=.45,WiltPt=.15,Z=1000) {
 
 TMWBdf$ET = TMWBdf$PET # in mm/day
-TMWBdf$AWC=(0.45-0.15)*1000 #Fld Cap = .45, Wilt Pt = .15, z=1000mm
+TMWBdf$AWC=(FldCap-WiltPt)*Z #Fld Cap = .45, Wilt Pt = .15, z=1000mm
 TMWBdf$dP = TMWBdf$P-TMWBdf$ET -TMWBdf$SNO + TMWBdf$SNOmlt 
 
 attach(TMWBdf)# Remember to detach or it gets ugly
@@ -55,9 +55,9 @@ for (t in 2:length(date)){
   Qpred[t]=fcres*S[t]
   S[t]=S[t]-Qpred[t]
 }
-detach(TMWBdf) # IMPORTANT TO DETACH
 TMWBdf$S=S
 TMWBdf$Qpred=Qpred # UPDATE vector BEFORE DETACHING
+detach(TMWBdf) # IMPORTANT TO DETACH
 rm(list=c("S","Qpred"))
 View(TMWBdf)
 dev.off()
@@ -126,7 +126,13 @@ attach(TMWBdf)
 plot(TMWBdf$date,P,col="black")
 lines(date,Qmm,type = "l",col="red")
 lines(date,Qpred,col="blue")
+setwd("~/2023/BSE5304Labs04/pdfs/Lab04")
+pdf("TMWB_QmmvQpred.pdf")
 plot(TMWBdf$Qmm,TMWBdf$Qpred)
+dev.off()
+pdf("TMWB_dPvQmm.pdf")
+plot(TMWBdf$dP, TMWBdf$Qmm)
+dev.off()
 detach(TMWBdf)
 
 return(TMWBdf)

@@ -265,7 +265,7 @@ mydemw=rast("mydemw.tif")
 mydemw_poly=as.polygons(mydemw,na.rm=T)
 plot(mydemw_poly,add=T,col=rainbow(6))
 
-writeVector(mydemw_poly,dsn=".", layer="mydemw", driver="ESRI Shapefile", overwrite_layer=TRUE)
+#writeVector(mydemw_poly,dsn=".", layer="mydemw", driver="ESRI Shapefile", overwrite_layer=TRUE)
 writeVector(mydemw_poly, filename="mydemw.shp", filetype="ESRI Shapefile", layer="mydemw", insert=FALSE,
             overwrite=TRUE)
 
@@ -383,7 +383,8 @@ NSE=function(Yobs,Ysim){
 ### NEW GITHUB READIN
 #insert github link
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBSoilFuncs.R")
-source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TISnow.R")
+#source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TISnow.R")
+source("https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/TISnow.R")
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMWBModel.R")
 #
 
@@ -398,11 +399,13 @@ source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/TMW
 # Tlag = 1  # referred to as TIMP in SWAT input (Table 1)
 
 TMWB=BasinData
-TISnow(TMWB,SFTmp=2,bmlt6=4.5,bmlt12=0.0,Tmlt=3,Tlag=1)
+setwd("~/data/Lab04")
+TISnow(TMWB)
 #   
 
+#issues with TISnow even though I know it's the correct version
 attach(TMWB)
-SNO_df=TISnow(TMWB, SFTmp=6)
+SNO_df=TISnow(TMWB, SFTmp=1)
 TMWB$SNO=SNO_df$SNO
 TMWB$SNOmlt=SNO_df$SNOmlt
 TMWB$SNOfall=SNO_df$SNOfall
@@ -419,7 +422,7 @@ TMWB$PET=PET_fromTemp(Jday=(1+as.POSIXlt(date)$yday),Tmax_C = MaxTemp,Tmin_C = M
 plot(date,TMWB$PET)
 detach(TMWB)
 
-
+### MODELS -----
 
 #Still having issues with snow accumulation. Check later.
 
@@ -442,6 +445,13 @@ detach(TMWB)
 # The library lubridate is handy here as it gives us a function "month"
 # and later on we will find library data.table handy, so will load it here
 TMWBnew=TMWBModel(TMWB)
+
+#calibrate??
+# TMWBcalibrate=TMWBModel(TMWB, WiltPt = .35, FldCap = .5, Z=300)
+# NSE(TMWBcalibrate$Qmm,TMWBcalibrate$Qpred)
+# 
+
+
 BasinTMWB_JO=TMWBnew[(month(TMWBnew$date) > 5 
                       & month(TMWBnew$date) < 11),]
 attach(BasinTMWB_JO)
@@ -449,14 +459,11 @@ plot(dP,Qmm)
 detach(BasinTMWB_JO)
 
 
-TMWBcalibrate=TMWBModel(BasinTMWB_JO, WiltPt = .05, Fld = .5, Z=300)
-NSE(TMWBcalibrate$Qmm,TMWBcalibrate$Qpred)
+
 
 
 ### CURVE NUMBER STUFF -----
-
-
-(1000/85-10)*25.4   # our CN estimate in bold
+(1000/90-10)*25.4   # our CN estimate in bold
 #[1] 44.82353
 (1000/50-10)*25.4   # our CN estimate in bold
 #[1] 254
@@ -479,8 +486,9 @@ points(dP,dP^2/(dP+260),col="blue")# S guestimates in bold
 #   Qpred=dP^2/(dP+S)
 #
 NSE(Qmm,dP^2/(dP+260))
-# [1] 0.02375528
-  NSE(Qmm,dP^2/(dP+45))
+# [1] 0.02375528  POSTIVE VALUE!! BETTER MODEL!!
+NSE(Qmm,dP^2/(dP+45))
+# negative value
 
 #
 # Keep iterating until NSE is as high as you can get for your 
@@ -490,26 +498,24 @@ f <- function (x) {
   Sest=x
   NSE(Qmm,dP^2/(dP+Sest))
 }
-optimize(f, c(50,500), tol = 0.0001,maximum = TRUE)$maximum
-Sest="WHAT?"
+#worst case scenario curve number at 90
+bestS=optimize(f, c(28,500), tol = 0.0001,maximum = TRUE)$maximum
+f(bestS)
+#Sest="WHAT?"
+setwd("~/2023/BSE5304Labs04/pdfs/Lab04")
+pdf("CN_dPvQmm.pdf")
 plot(dP,Qmm)
-points(dP,dP^2/(dP+Sest),col="red") 
+dev.off()
+points(dP,dP^2/(dP+bestS),col="red")
+pdf("CN_QmmVQpred.pdf")
+plot(Qmm,Qpred)
+dev.off()
 ########
 detach(BasinTMWB_JO)
+
+
 
 
 #
 # What is the optimum value of Sest and the corresponding NSE?
 #
-
-CNmodeldf1 = BasinData
-CNavg = 75
-IaFrac = 0.05
-fnc_slope=0 
-fnc_aspect=0
-func_DAWC=.3
-func_z=1000
-fnc_fcres=.3
-
-source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/CNModel.R")
-CNModel(CNmodeldf1)
