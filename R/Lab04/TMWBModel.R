@@ -130,4 +130,5 @@ lines(date,Qpred,col="blue")
 plot(TMWBdf$Qmm,TMWBdf$Qpred)
 detach(TMWBdf)
 
+return(TMWBdf)
 }
