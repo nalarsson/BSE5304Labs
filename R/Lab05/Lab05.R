@@ -8,7 +8,9 @@ rm(list=objects()) # Removes ALL the objects… so be careful here.
 # What is going to change from use case to use case 
 LabNo="/Lab04a"
 myflowgage_id="0205551460"  # Old Friendly Gage
-#
+#myflowgage_id="02017000"  	#MEADOW CREEK AT NEWCASTLE, VA
+#myflowgage_id="04288225" # W BRANCH LITTLE R ABV BINGHAM FALLS NEAR STOWE, VT, 44.5 lat
+
 # What needs to be loaded
 #
 if (!require("pacman")) install.packages("pacman")
@@ -85,13 +87,13 @@ TMWB=BasinData
 
 
 
-# Things we repeat can be saved and accessed without messing up our working area
-# https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/Lab05SetupDRF.R
-# becomes: 
-url="https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/Lab05SetupDRF.R"
-# This will grab the solution for last weeks Lab03 Homework
-download.file(url,"Lab05SetupDRF.R")
-file.edit("Lab05SetupDRF.R")
+# # Things we repeat can be saved and accessed without messing up our working area
+# # https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/Lab05SetupDRF.R
+# # becomes: 
+# url="https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/Lab05SetupDRF.R"
+# # This will grab the solution for last weeks Lab03 Homework
+# download.file(url,"Lab05SetupDRF.R")
+# file.edit("Lab05SetupDRF.R")
 
 # Grab out models for Snow and TMWB
 # https://raw.githubusercontent.com/vtdrfuka/BSE5304Labs/main/R/TMWBFuncs.R
@@ -118,17 +120,42 @@ TMWBoptFunc <- function(x){
   1-NSE(Yobs=outTMWB$Qmm, Ysim=outTMWB$Qpred)
 }
 x=c(0.3,1000)
-TMWBoptFunc(x)
+#TMWBoptFunc(x)
 lower <- c(.01,300,-1,.1)
 upper <-c(.95,3000,6,5)
 
 #outDEMoptim=DEoptim(TMWBoptFunc,lower,upper)
 #detach issues??
-outDEoptim <- DEoptim(TMWBoptFunc, lower, upper, 
+outDEoptimTMWB <- DEoptim(TMWBoptFunc, lower, upper, 
                       DEoptim.control(NP = 80, #80 iteration running 80*400 with different numbers
-                                      itermax = 10, 
+                                      itermax = 400, 
                                       F = 1.2, CR = 0.7))
 
+source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/CNModel.R")
+CNModel(BasinData)
 
+CN <- BasinData
 
+CNoptFunc <- function(x){
+  x1 <- x[1]
+  x2 <- x[2]
+  x3 <- x[3]
+  x4 <- x[4]
+  x5 <- x[5]
+  x6 <- x[6]
+  x7 <- x[7]
+  outCN=CNModel(CNmodeldf=CN, CNavg=x1, IaFrac=x2, fnc_slope=x3, fnc_aspect=x4,
+                func_DAWC=x5, func_z=x6, fnc_fcres=x7)
+  1-NSE(Yobs=outCN$Qmm, Ysim=outCN$Qpred)
+}
+x=c(0.3,1000)
+#CNoptFunc(x)
+lower <- c(40, .01, 0, 0, .01, 300, .1)
+upper <-c(98, .2, .2, .2, .2, 3000, .5)
 
+#outDEMoptim=DEoptim(TMWBoptFunc,lower,upper)
+#detach issues??
+outDEoptimCN <- DEoptim(CNoptFunc, lower, upper, 
+                      DEoptim.control(NP = 80, #80 iteration running 80*400 with different numbers
+                                      itermax = 400, 
+                                      F = 1.2, CR = 0.7))

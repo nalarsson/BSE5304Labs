@@ -4,20 +4,20 @@
 
 # trim to just be what is needed!! only a function, no inputs
 
-# CNmodeldf1 = BasinData
-# CNavg = 75
-# IaFrac = 0.05
-# fnc_slope=0 
-# fnc_aspect=0
-# func_DAWC=.3
-# func_z=1000
-# fnc_fcres=.3
+CNmodeldf1 = BasinData
+CNavg = 75
+IaFrac = 0.05
+fnc_slope=0
+fnc_aspect=0
+func_DAWC=.3
+func_z=1000
+fnc_fcres=.3
 
 # CNmodeldf$Albedo=.23
 # CNmodeldf$Albedo[CNmodeldf$SNO>0]=.95
 
-CNModel = function(CNmodeldf,CNavg = 75,IaFrac = 0.05,fnc_slope=0,
-                   fnc_aspect=0,func_DAWC=.3,func_z=1000,fnc_fcres=.3) {
+# CNModel = function(CNmodeldf,CNavg = 75,IaFrac = 0.05,fnc_slope=0,
+#                    fnc_aspect=0,func_DAWC=.3,func_z=1000,fnc_fcres=.3) {
 
 
   # Energy Balance based Snow Accumulation 
@@ -95,4 +95,6 @@ CNModel = function(CNmodeldf,CNavg = 75,IaFrac = 0.05,fnc_slope=0,
   CNmodeldf$Qpred=Qpred # UPDATE vector BEFORE DETACHING
   rm(list=c("AW", "dP", "ET", "Excess", "Qpred", "S"))
   detach(CNmodeldf)
-}
+  
+  return(CNmodeldf)
+# }
