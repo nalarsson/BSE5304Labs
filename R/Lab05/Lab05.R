@@ -128,7 +128,7 @@ upper <-c(.95,3000,6,5)
 #detach issues??
 outDEoptimTMWB <- DEoptim(TMWBoptFunc, lower, upper, 
                       DEoptim.control(NP = 80, #80 iteration running 80*400 with different numbers
-                                      itermax = 400, 
+                                      itermax = 10, 
                                       F = 1.2, CR = 0.7))
 
 source("https://raw.githubusercontent.com/nalarsson/BSE5304Labs/main/R/Lab04/CNModel.R")
@@ -157,5 +157,5 @@ upper <-c(98, .2, .2, .2, .2, 3000, .5)
 #detach issues??
 outDEoptimCN <- DEoptim(CNoptFunc, lower, upper, 
                       DEoptim.control(NP = 80, #80 iteration running 80*400 with different numbers
-                                      itermax = 400, 
+                                      itermax = 10, 
                                       F = 1.2, CR = 0.7))
