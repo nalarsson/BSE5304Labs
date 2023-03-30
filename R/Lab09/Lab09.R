@@ -1,3 +1,4 @@
+#Original Gage -----
 LabNo="/Lab09"
 myflowgage_id="0205551460"  # Old Friendly Gage
 #
@@ -149,18 +150,21 @@ mydem=get_aws_terrain(locations=ab_utm@coords,
 # what gages connect with what gages
 #
 
+
+pdf()
 plot(mydem)
 plot(ab_utm,add=T)
 text(ab_utm, labels=ab_utm@data$site_no, cex=0.6, font=2,pos=1)
 # Streams as USGS sees them, I know I can get an overview of streams with the 
 # USGS H
+#???
 url="https://prd-tnm.s3.amazonaws.com/StagedProducts/Hydrography/NHD/HU8/Shape/NHD_H_03010101_HU8_Shape.zip"
 curl_download(url,"NHD_H_03010101_HU8_Shape.zip")
 unzip("NHD_H_03010101_HU8_Shape.zip",exdir="03010101")
 streams=readOGR("03010101/Shape/NHDFlowline.dbf")
 streams_utm=spTransform(streams,crs_utm)
 plot(streams_utm,col="blue",add=T)
-
+dev.off()
 
 # #
 # # Breaking things for educational purposes
@@ -208,6 +212,8 @@ USGS02056000$flowdata$depth_m=USGS02056000$flowdata$X_00065_00000*0.3048
 # Set the starting and ending locations
 # determine the river reach length and slope using the gdistance package.
 #
+
+
 A=SpatialPoints(USGS0205551460$site)# Up gradient site Lick Run
 B=SpatialPoints(USGS02056000$site) # Down gradient site ROA River atNiagara
 proj4string(A)=proj4_ll
@@ -268,32 +274,17 @@ plot(USGS0205551460$flowdata$dateTime,USGS0205551460$flowdata$B, main="LICK RUN 
 #
 
 #PLOT FIX IN HW Q1
-plot(USGS0205551460$flowdata$cms,USGS0205551460$flowdata$depth_m, main="LICK RUN TO ROANOKE RIVER AT NIAGARA, VA")
-
-# #adjust plot???
+# plot(USGS0205551460$flowdata$cms,USGS0205551460$flowdata$depth_m, main="LICK RUN TO ROANOKE RIVER AT NIAGARA, VA")
+# 
+# #adjust plot
 # basedepth = min(USGS0205551460$flowdata$depth_m, na.rm=TRUE)
 # USGS0205551460$flowdata$depth_m = USGS0205551460$flowdata$depth_m - basedepth
 # baseflow = min(USGS0205551460$flowdata$cms, na.rm=TRUE)
 # USGS0205551460$flowdata$cms = USGS0205551460$flowdata$cms - baseflow
-
-plot(USGS0205551460$flowdata$cms,USGS0205551460$flowdata$depth_m, main="LICK RUN TO ROANOKE RIVER AT NIAGARA, VA")
-
-#this is where lab starts????
-
-
-# gage_math(USGS0205551460)
-# gage_math = function(gage=USGS0205551460){
-#   gage$flowdata$ck = 5/3*(sqrt(gage$site$slope)/gage$site$man_n)*gage$flowdata$depth_m^(2/3)
-#   gage$flowdata$dt = gage$site$L/gage$flowdata$ck
-#   gage$flowdata$outTime = gage$flowdata$dateTime + gage$flowdata$dt
-#   
-#   return(gage)
-# }
 # 
-# gage_math(USGS02054530)
-# gage_math(USGS02055100)
-# gage_math(USGS02056000)
-
+# pdf("~/2023/BSE5304Labs09/R/Lab09/adjustedgraph.pdf")
+# plot(USGS0205551460$flowdata$cms,USGS0205551460$flowdata$depth_m, main="LICK RUN TO ROANOKE RIVER AT NIAGARA, VA")
+# dev.off()
 # ck
 # USGS0205551460$flowdata$ck = 5/3*(sqrt(USGS0205551460$site$slope)/USGS0205551460$site$man_n)*USGS0205551460$flowdata$depth_m^(2/3)
 #   # ANS
@@ -310,46 +301,482 @@ plot(USGS0205551460$flowdata$cms,USGS0205551460$flowdata$depth_m, main="LICK RUN
 # Find the beginning of  Waves assuming a new wave starts at 110% of prior 
 # flow. This might need to change for your homework
 
-WaveStartDecPercent=1.10 #where does the wave start?
-gage=USGS0205551460
-# Make this a function
-wave_func = function(WaveStartDecPercent=1.10, gage=USGS0205551460) {
+
+
+# Gage  USGS 0205551460 ------
+# A=SpatialPoints(USGS0205551460$site)# Up gradient site Lick Run
+# B=SpatialPoints(USGS02056000$site) # Down gradient site ROA River atNiagara
+# proj4string(A)=proj4_ll
+# proj4string(B)=proj4_ll
+# A_utm=spTransform(A,crs_utm)
+# B_utm=spTransform(B,crs_utm)
+# # Cut the DEM down to a more manageable size
+# cropmydem=crop(mydem,extend(extent(ab_utm),600))
+# cropmydem=trim(cropmydem)
+# cropmydem=cropmydem*1000.0
+# plot(cropmydem)
+# plot(ab_utm,add=T)
+# # Set up the weighting functions
+# altDiff <- function(x){x[2] - x[1]}
+# hd <- transition(cropmydem, altDiff, 8, symm=FALSE)
+# slope <- geoCorrection(hd)
+# adj <- adjacent(cropmydem, cells=1:ncell(cropmydem), pairs=TRUE, directions=8)
+# speed <- slope
+# speed[adj] <- 6 * exp(-3.5 * abs(slope[adj] + 0.05))
+# Conductance <- geoCorrection(speed)
+# # Find and plot the flow path
+# AtoB <- shortestPath(Conductance, A_utm, B_utm, output="SpatialLines")
+# plot(AtoB,add=T)
+# plot(streams_utm,col="blue",add=T)
+# plot(AtoB,add=T)
+# SpatialLinesLengths(AtoB)
+
+
+
+  USGS0205551460$flowdata$ck = 5/3*(sqrt(USGS0205551460$site$slope)/USGS0205551460$site$man_n)*USGS0205551460$flowdata$depth_m^(2/3)
+  USGS0205551460$flowdata$dt = USGS0205551460$site$L/USGS0205551460$flowdata$ck
+  USGS0205551460$flowdata$outTime = USGS0205551460$flowdata$dateTime + USGS0205551460$flowdata$dt
   
-  gage$flowdata$ck = 5/3*(sqrt(gage$site$slope)/gage$site$man_n)*gage$flowdata$depth_m^(2/3)
-  gage$flowdata$dt = gage$site$L/gage$flowdata$ck
-  gage$flowdata$outTime = gage$flowdata$dateTime + gage$flowdata$dt
+  #how change this??
+  WaveStartDecPercent=1.50 #where does the wave start?
   
-  gage$flowdata$newwave=
-    gage$flowdata$cms *WaveStartDecPercent <
-    data.table::shift(gage$flowdata$cms)
-  summary(gage$flowdata$newwave)
+  USGS0205551460$flowdata$newwave=
+    USGS0205551460$flowdata$cms *WaveStartDecPercent <
+    data.table::shift(USGS0205551460$flowdata$cms)
+  summary(USGS0205551460$flowdata$newwave)
 
   # Add plot of the point found
-  len=length(gage$flowdata$newwave)
-  gage$flowdata$newwave[is.na(gage$flowdata$newwave)]=F
+  len=length(USGS0205551460$flowdata$newwave)
+  USGS0205551460$flowdata$newwave[is.na(USGS0205551460$flowdata$newwave)]=F
   # Removes repeated finds by going through loop backwords
   for (i in seq(len,2)){
     print(i)
-    if(gage$flowdata$newwave[i]==T &
-      gage$flowdata$newwave[i-1]==T){
-      gage$flowdata$newwave[i]=F
+    if(USGS0205551460$flowdata$newwave[i]==T &
+      USGS0205551460$flowdata$newwave[i-1]==T){
+      USGS0205551460$flowdata$newwave[i]=F
     }
   }
-  plot(gage$flowdata$dateTime,gage$flowdata$cms,type="l")
-  points(gage$flowdata$dateTime[gage$flowdata$newwave],
-         gage$flowdata$cms[gage$flowdata$newwave],col=2)
+  plot(USGS0205551460$flowdata$dateTime,USGS0205551460$flowdata$cms,type="l")
+  points(USGS0205551460$flowdata$dateTime[USGS0205551460$flowdata$newwave],
+         USGS0205551460$flowdata$cms[USGS0205551460$flowdata$newwave],col=2)
 
   # Find the time locations where waves begin
-  which(gage$flowdata$newwave == TRUE)
-  plot(gage$flowdata$dateTime,gage$flowdata$cms,
-       type="l",xlim=c(gage$flowdata$dateTime[1109],
-                       gage$flowdata$dateTime[1109+200]))
+  which(USGS0205551460$flowdata$newwave == TRUE)
+  plot(USGS0205551460$flowdata$dateTime,USGS0205551460$flowdata$cms,
+       type="l",xlim=c(USGS0205551460$flowdata$dateTime[1109],
+                       USGS0205551460$flowdata$dateTime[1109+200]))
   
   #out time not working??
-  lines(gage$flowdata$outTime,gage$flowdata$cms,col=2)
+  lines(USGS0205551460$flowdata$outTime,USGS0205551460$flowdata$cms,col=2)
   
-  return(gage)
-}
+
+  USGS0205551460$flowdata$ck = 5/3*(sqrt(USGS0205551460$site$slope)/USGS0205551460$site$man_n)*USGS0205551460$flowdata$depth_m^(2/3)
+  USGS0205551460$flowdata$dt = USGS0205551460$site$L/USGS0205551460$flowdata$ck
+  USGS0205551460$flowdata$outTime = USGS0205551460$flowdata$dateTime + USGS0205551460$flowdata$dt
+  
+  #how change this??
+  WaveStartDecPercent=1.50 #where does the wave start?
+  
+  USGS0205551460$flowdata$newwave=
+    USGS0205551460$flowdata$cms *WaveStartDecPercent <
+    data.table::shift(USGS0205551460$flowdata$cms)
+  summary(USGS0205551460$flowdata$newwave)
+
+  # Add plot of the point found
+  len=length(USGS0205551460$flowdata$newwave)
+  USGS0205551460$flowdata$newwave[is.na(USGS0205551460$flowdata$newwave)]=F
+  # Removes repeated finds by going through loop backwords
+  for (i in seq(len,2)){
+    print(i)
+    if(USGS0205551460$flowdata$newwave[i]==T &
+      USGS0205551460$flowdata$newwave[i-1]==T){
+      USGS0205551460$flowdata$newwave[i]=F
+    }
+  }
+  plot(USGS0205551460$flowdata$dateTime,USGS0205551460$flowdata$cms,type="l")
+  points(USGS0205551460$flowdata$dateTime[USGS0205551460$flowdata$newwave],
+         USGS0205551460$flowdata$cms[USGS0205551460$flowdata$newwave],col=2)
+
+  # Find the time locations where waves begin
+  which(USGS0205551460$flowdata$newwave == TRUE)
+  pdf("~/2023/BSE5304Labs09/R/Lab09/gage0205551460.pdf")
+  plot(USGS0205551460$flowdata$dateTime,USGS0205551460$flowdata$cms,
+       type="l", xlim=c(USGS0205551460$flowdata$dateTime[1109],
+                       USGS0205551460$flowdata$dateTime[1109+200]))
+  
+  lines(USGS0205551460$flowdata$outTime,USGS0205551460$flowdata$cms,col=2)
+  dev.off()
+
+# Gage 02055100 -----
+  A=SpatialPoints(USGS02055100$site)# Up gradient site Lick Run
+  B=SpatialPoints(USGS02056000$site) # Down gradient site ROA River atNiagara
+  proj4string(A)=proj4_ll
+  proj4string(B)=proj4_ll
+  A_utm=spTransform(A,crs_utm)
+  B_utm=spTransform(B,crs_utm)
+  # Cut the DEM down to a more manageable size
+  cropmydem=crop(mydem,extend(extent(ab_utm),600))
+  cropmydem=trim(cropmydem)
+  cropmydem=cropmydem*1000.0
+  plot(cropmydem)
+  plot(ab_utm,add=T)
+  # Set up the weighting functions
+  altDiff <- function(x){x[2] - x[1]}
+  hd <- transition(cropmydem, altDiff, 8, symm=FALSE)
+  slope <- geoCorrection(hd)
+  adj <- adjacent(cropmydem, cells=1:ncell(cropmydem), pairs=TRUE, directions=8)
+  speed <- slope
+  speed[adj] <- 6 * exp(-3.5 * abs(slope[adj] + 0.05))
+  Conductance <- geoCorrection(speed)
+  # Find and plot the flow path
+  AtoB <- shortestPath(Conductance, A_utm, B_utm, output="SpatialLines")
+  plot(AtoB,add=T)
+  plot(streams_utm,col="blue",add=T)
+  plot(AtoB,add=T)
+  SpatialLinesLengths(AtoB)
+  
+  
+  
+  
+  USGS02055100$site$L=SpatialLinesLengths(AtoB) # km to m
+  USGS02055100$site$L # reach length in m
+  #
+  #
+  # Getting slope, we will extract the slope for points A and B from the DEM and # divide the difference by the length in m, this gives us a much better 
+  # estimate of slope than taking the point slopes at the gage site
+  #
+  USGS02055100$site$slope=(extract(mydem,A_utm)-
+                               extract(mydem,B_utm))/USGS02055100$site$L
+  USGS02055100$site$slope
+  
+  # So now we have flow depth (y "$depth_m"), manning's n ("$man_n"), Q ("$cms"), and slope ("$slope") rearrange to solve for B
+  # B=(n*Q)/(y^(5/3)*sqrt(So))
+  USGS02055100$flowdata$B=(USGS02055100$site$man_n*
+                               USGS02055100$flowdata$cms)/(USGS02055100$flowdata$depth_m^(5/3)*
+                                                               sqrt(USGS02055100$site$slope))
+  
+  USGS02055100$flowdata$ck = 5/3*(sqrt(USGS02055100$site$slope)/USGS02055100$site$man_n)*USGS02055100$flowdata$depth_m^(2/3)
+  USGS02055100$flowdata$dt = USGS02055100$site$L/USGS02055100$flowdata$ck
+  USGS02055100$flowdata$outTime = USGS02055100$flowdata$dateTime + USGS02055100$flowdata$dt
+  
+  #how change this??
+  WaveStartDecPercent=1 #where does the wave start?
+  
+  USGS02055100$flowdata$newwave=
+    USGS02055100$flowdata$cms *WaveStartDecPercent <
+    data.table::shift(USGS02055100$flowdata$cms)
+  summary(USGS02055100$flowdata$newwave)
+  
+  # Add plot of the point found
+  len=length(USGS02055100$flowdata$newwave)
+  USGS02055100$flowdata$newwave[is.na(USGS02055100$flowdata$newwave)]=F
+  # Removes repeated finds by going through loop backwords
+  for (i in seq(len,2)){
+    print(i)
+    if(USGS02055100$flowdata$newwave[i]==T &
+       USGS02055100$flowdata$newwave[i-1]==T){
+      USGS02055100$flowdata$newwave[i]=F
+    }
+  }
+  plot(USGS02055100$flowdata$dateTime,USGS02055100$flowdata$cms,type="l")
+  points(USGS02055100$flowdata$dateTime[USGS02055100$flowdata$newwave],
+         USGS02055100$flowdata$cms[USGS02055100$flowdata$newwave],col=2)
+  
+  # Find the time locations where waves begin
+  which(USGS02055100$flowdata$newwave == TRUE)
+  pdf("~/2023/BSE5304Labs09/R/Lab09/gage02055100.pdf")
+  plot(USGS02055100$flowdata$dateTime,USGS02055100$flowdata$cms,
+       type="l",xlim=c(USGS02055100$flowdata$dateTime[1109],
+                       USGS02055100$flowdata$dateTime[1109+200]), ylim=c(0,3))
+  
+  #out time not working??
+  lines(USGS02055100$flowdata$outTime,USGS02055100$flowdata$cms,col=2)
+  dev.off()
+  
+  
+  
+# Gage 02054530  -----
+  A=SpatialPoints(USGS02054530$site)# Up gradient site Lick Run
+  B=SpatialPoints(USGS02056000$site) # Down gradient site ROA River atNiagara
+  proj4string(A)=proj4_ll
+  proj4string(B)=proj4_ll
+  A_utm=spTransform(A,crs_utm)
+  B_utm=spTransform(B,crs_utm)
+  # Cut the DEM down to a more manageable size
+  cropmydem=crop(mydem,extend(extent(ab_utm),600))
+  cropmydem=trim(cropmydem)
+  cropmydem=cropmydem*1000.0
+  plot(cropmydem)
+  plot(ab_utm,add=T)
+  # Set up the weighting functions
+  altDiff <- function(x){x[2] - x[1]}
+  hd <- transition(cropmydem, altDiff, 8, symm=FALSE)
+  slope <- geoCorrection(hd)
+  adj <- adjacent(cropmydem, cells=1:ncell(cropmydem), pairs=TRUE, directions=8)
+  speed <- slope
+  speed[adj] <- 6 * exp(-3.5 * abs(slope[adj] + 0.05))
+  Conductance <- geoCorrection(speed)
+  # Find and plot the flow path
+  AtoB <- shortestPath(Conductance, A_utm, B_utm, output="SpatialLines")
+  plot(AtoB,add=T)
+  plot(streams_utm,col="blue",add=T)
+  plot(AtoB,add=T)
+  SpatialLinesLengths(AtoB)
+  
+  
+  
+  
+  USGS02054530$site$L=SpatialLinesLengths(AtoB) # km to m
+  USGS02054530$site$L # reach length in m
+  #
+  #
+  # Getting slope, we will extract the slope for points A and B from the DEM and # divide the difference by the length in m, this gives us a much better 
+  # estimate of slope than taking the point slopes at the gage site
+  #
+  USGS02054530$site$slope=(extract(mydem,A_utm)-
+                               extract(mydem,B_utm))/USGS02054530$site$L
+  USGS02054530$site$slope
+  
+  # So now we have flow depth (y "$depth_m"), manning's n ("$man_n"), Q ("$cms"), and slope ("$slope") rearrange to solve for B
+  # B=(n*Q)/(y^(5/3)*sqrt(So))
+  USGS02054530$flowdata$B=(USGS02054530$site$man_n*
+                               USGS02054530$flowdata$cms)/(USGS02054530$flowdata$depth_m^(5/3)*
+                                                               sqrt(USGS02054530$site$slope))
+  
+  USGS02054530$flowdata$ck = 5/3*(sqrt(USGS02054530$site$slope)/USGS02054530$site$man_n)*USGS02054530$flowdata$depth_m^(2/3)
+  USGS02054530$flowdata$dt = USGS02054530$site$L/USGS02054530$flowdata$ck
+  USGS02054530$flowdata$outTime = USGS02054530$flowdata$dateTime + USGS02054530$flowdata$dt
+  
+  #how change this??
+  WaveStartDecPercent=.8 #where does the wave start?
+  
+  USGS02054530$flowdata$newwave=
+    USGS02054530$flowdata$cms *WaveStartDecPercent <
+    data.table::shift(USGS02054530$flowdata$cms)
+  summary(USGS02054530$flowdata$newwave)
+  
+  # Add plot of the point found
+  len=length(USGS02054530$flowdata$newwave)
+  USGS02054530$flowdata$newwave[is.na(USGS02054530$flowdata$newwave)]=F
+  # Removes repeated finds by going through loop backwords
+  for (i in seq(len,2)){
+    print(i)
+    if(USGS02054530$flowdata$newwave[i]==T &
+       USGS02054530$flowdata$newwave[i-1]==T){
+      USGS02054530$flowdata$newwave[i]=F
+    }
+  }
+  plot(USGS02054530$flowdata$dateTime,USGS02054530$flowdata$cms,type="l")
+  points(USGS02054530$flowdata$dateTime[USGS02054530$flowdata$newwave],
+         USGS02054530$flowdata$cms[USGS02054530$flowdata$newwave],col=2)
+  
+  # Find the time locations where waves begin
+  which(USGS02054530$flowdata$newwave == TRUE)
+  pdf("~/2023/BSE5304Labs09/R/Lab09/gage02054530.pdf")
+  plot(USGS02054530$flowdata$dateTime,USGS02054530$flowdata$cms,
+       type="l",xlim=c(USGS02054530$flowdata$dateTime[1109],
+                       USGS02054530$flowdata$dateTime[1109+200]))
+  
+  #out time not working??
+  lines(USGS02054530$flowdata$outTime,USGS02054530$flowdata$cms,col=2)
+  dev.off()
+  
+# Gage USGS 02055000 -----
+  
+  A=SpatialPoints(USGS02055000$site)# Up gradient site Lick Run
+  B=SpatialPoints(USGS02056000$site) # Down gradient site ROA River atNiagara
+  proj4string(A)=proj4_ll
+  proj4string(B)=proj4_ll
+  A_utm=spTransform(A,crs_utm)
+  B_utm=spTransform(B,crs_utm)
+  # Cut the DEM down to a more manageable size
+  cropmydem=crop(mydem,extend(extent(ab_utm),600))
+  cropmydem=trim(cropmydem)
+  cropmydem=cropmydem*1000.0
+  plot(cropmydem)
+  plot(ab_utm,add=T)
+  # Set up the weighting functions
+  altDiff <- function(x){x[2] - x[1]}
+  hd <- transition(cropmydem, altDiff, 8, symm=FALSE)
+  slope <- geoCorrection(hd)
+  adj <- adjacent(cropmydem, cells=1:ncell(cropmydem), pairs=TRUE, directions=8)
+  speed <- slope
+  speed[adj] <- 6 * exp(-3.5 * abs(slope[adj] + 0.05))
+  Conductance <- geoCorrection(speed)
+  # Find and plot the flow path
+  AtoB <- shortestPath(Conductance, A_utm, B_utm, output="SpatialLines")
+  plot(AtoB,add=T)
+  plot(streams_utm,col="blue",add=T)
+  plot(AtoB,add=T)
+  SpatialLinesLengths(AtoB)
+  
+  
+  
+  
+  USGS02055000$site$L=SpatialLinesLengths(AtoB) # km to m
+  USGS02055000$site$L # reach length in m
+  #
+  #
+  # Getting slope, we will extract the slope for points A and B from the DEM and # divide the difference by the length in m, this gives us a much better 
+  # estimate of slope than taking the point slopes at the gage site
+  #
+  USGS02055000$site$slope=(extract(mydem,A_utm)-
+                             extract(mydem,B_utm))/USGS02055000$site$L
+  USGS02055000$site$slope
+  
+  # So now we have flow depth (y "$depth_m"), manning's n ("$man_n"), Q ("$cms"), and slope ("$slope") rearrange to solve for B
+  # B=(n*Q)/(y^(5/3)*sqrt(So))
+  USGS02055000$flowdata$B=(USGS02055000$site$man_n*
+                             USGS02055000$flowdata$cms)/(USGS02055000$flowdata$depth_m^(5/3)*
+                                                           sqrt(USGS02055000$site$slope))
+  
+  USGS02055000$flowdata$ck = 5/3*(sqrt(USGS02055000$site$slope)/USGS02055000$site$man_n)*USGS02055000$flowdata$depth_m^(2/3)
+  USGS02055000$flowdata$dt = USGS02055000$site$L/USGS02055000$flowdata$ck
+  USGS02055000$flowdata$outTime = USGS02055000$flowdata$dateTime + USGS02055000$flowdata$dt
+  
+  #how change this??
+  WaveStartDecPercent=1.10 #where does the wave start?
+  
+  USGS02055000$flowdata$newwave=
+    USGS02055000$flowdata$cms *WaveStartDecPercent <
+    data.table::shift(USGS02055000$flowdata$cms)
+  summary(USGS02055000$flowdata$newwave)
+  
+  # Add plot of the point found
+  len=length(USGS02055000$flowdata$newwave)
+  USGS02055000$flowdata$newwave[is.na(USGS02055000$flowdata$newwave)]=F
+  # Removes repeated finds by going through loop backwords
+  for (i in seq(len,2)){
+    print(i)
+    if(USGS02055000$flowdata$newwave[i]==T &
+       USGS02055000$flowdata$newwave[i-1]==T){
+      USGS02055000$flowdata$newwave[i]=F
+    }
+  }
+  plot(USGS02055000$flowdata$dateTime,USGS02055000$flowdata$cms,type="l")
+  points(USGS02055000$flowdata$dateTime[USGS02055000$flowdata$newwave],
+         USGS02055000$flowdata$cms[USGS02055000$flowdata$newwave],col=2)
+  
+  # Find the time locations where waves begin
+  which(USGS02055000$flowdata$newwave == TRUE)
+  pdf("~/2023/BSE5304Labs09/R/Lab09/gage02055000.pdf")
+  plot(USGS02055000$flowdata$dateTime,USGS02055000$flowdata$cms,
+       type="l",xlim=c(USGS02055000$flowdata$dateTime[1109],
+                       USGS02055000$flowdata$dateTime[1109+200]))
+  
+  #out time not working??
+  lines(USGS02055000$flowdata$outTime,USGS02055000$flowdata$cms,col=2)
+  dev.off()
+
+  
+# MY OWN RIVER SYSTEM - MONONGAHELA ------------
+
+#upstream
+  
+# 03072655 Monongahela River near Masontown, PA
+# 03075070 Monongahela River at Elizabeth, PA
+# 03086000 Ohio River at Sewickley, PA
+
+#downstream
+
+USGS03072655=make_usgs_gage_list(siteNo = "03072655")
+USGS03075070=make_usgs_gage_list(siteNo = "03075070")
+USGS03086000=make_usgs_gage_list(siteNo ="03086000")
 
 
-wave_func()
+ab_ll=rbind(USGS03072655$site,
+            USGS03075070$site,
+            USGS03086000$site)
+class(ab_ll)
+ab_ll@proj4string
+proj4_utm = paste0("+proj=utm +zone=",
+                   trunc((180+coordinates(USGS03075070$site)[1])/6+1),
+                   " +datum=WGS84 +units=m +no_defs")
+print(proj4_utm)
+# Lat/Lon (_ll) is much easier!
+proj4_ll = "+proj=longlat"
+crs_ll=CRS(proj4_ll)
+crs_utm=CRS(proj4_utm)
+proj4string(ab_ll)=proj4_ll
+ab_utm=spTransform(ab_ll,crs_utm)
+ab_utm@coords
+
+
+mydem=get_aws_terrain(locations=ab_utm@coords,
+                      z = 10, prj = proj4_utm,expand=1)
+pdf("~/2023/BSE5304Labs09/R/Lab09/dem.pdf")
+plot(mydem)
+plot(ab_utm,add=T)
+text(ab_utm, labels=ab_utm@data$site_no, cex=0.6, font=2,pos=1)
+dev.off()
+
+A=SpatialPoints(USGS03072655$site)# Up gradient site Lick Run
+B=SpatialPoints(USGS03086000$site) # Down gradient site ROA River atNiagara
+proj4string(A)=proj4_ll
+proj4string(B)=proj4_ll
+A_utm=spTransform(A,crs_utm)
+B_utm=spTransform(B,crs_utm)
+# Cut the DEM down to a more manageable size
+#change?
+cropmydem=crop(mydem,extend(extent(ab_utm),2000))
+cropmydem=trim(cropmydem)
+cropmydem=cropmydem*1000.0
+
+pdf("~/2023/BSE5304Labs09/R/Lab09/cropped_dem.pdf")
+plot(cropmydem)
+plot(ab_utm,add=T)
+dev.off()
+# Set up the weighting functions
+altDiff <- function(x){x[2] - x[1]}
+hd <- transition(cropmydem, altDiff, 8, symm=FALSE)
+slope <- geoCorrection(hd)
+adj <- adjacent(cropmydem, cells=1:ncell(cropmydem), pairs=TRUE, directions=8)
+speed <- slope
+speed[adj] <- 6 * exp(-3.5 * abs(slope[adj] + 0.05))
+Conductance <- geoCorrection(speed)
+# Find and plot the flow path
+AtoB <- shortestPath(Conductance, A_utm, B_utm, output="SpatialLines")
+pdf("~/2023/BSE5304Labs09/R/Lab09/dem_streams_wrong.pdf")
+plot(cropmydem)
+plot(ab_utm,add=T)
+plot(AtoB,add=T)
+plot(streams_utm,col="blue",add=T)
+plot(AtoB,add=T)
+SpatialLinesLengths(AtoB)
+dev.off()
+
+
+#adjust spatial points
+A=SpatialPoints(USGS03075070$site)# Up gradient site Lick Run
+B=SpatialPoints(USGS03086000$site) # Down gradient site ROA River atNiagara
+proj4string(A)=proj4_ll
+proj4string(B)=proj4_ll
+A_utm=spTransform(A,crs_utm)
+B_utm=spTransform(B,crs_utm)
+# Cut the DEM down to a more manageable size
+#change?
+cropmydem=crop(mydem,extend(extent(ab_utm),600))
+cropmydem=trim(cropmydem)
+cropmydem=cropmydem*1000.0
+
+# pdf("~/2023/BSE5304Labs09/R/Lab09/cropped_dem.pdf")
+plot(cropmydem)
+plot(ab_utm,add=T)
+# dev.off()
+# Set up the weighting functions
+altDiff <- function(x){x[2] - x[1]}
+hd <- transition(cropmydem, altDiff, 8, symm=FALSE)
+slope <- geoCorrection(hd)
+adj <- adjacent(cropmydem, cells=1:ncell(cropmydem), pairs=TRUE, directions=8)
+speed <- slope
+speed[adj] <- 6 * exp(-3.5 * abs(slope[adj] + 0.05))
+Conductance <- geoCorrection(speed)
+
+pdf("~/2023/BSE5304Labs09/R/Lab09/dem_streams.pdf")
+plot(cropmydem)
+plot(ab_utm,add=T)
+plot(AtoB,add=T)
+plot(streams_utm,col="blue",add=T)
+plot(AtoB,add=T)
+SpatialLinesLengths(AtoB)
+dev.off()
