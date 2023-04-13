@@ -574,7 +574,7 @@ DPTI05=data.frame(date=TIC05$date,
                   Tavg=(TIC05$MaxTemp+TIC05$MinTemp)/2)
 # Take it to volumetric water content rather # than volumetric soil content, 
 # should be in m of water
-tau=9.3  # days
+tau=2 # days
 dt=1     # days time step
 kF=.015  # Table 2
 # Initialize MF and DF
@@ -582,7 +582,7 @@ DPTI05$MF=0
 DPTI05$DF=0
 
 # Spread your P Fertilizer on ~May 1, ~August 1, and ~October 1
-#DPTI05$MF[(format(DPTI05$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
+DPTI05$MF[(format(DPTI05$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
 
 # Remember what we say about attaching! 
 attach(DPTI05)
@@ -613,7 +613,7 @@ DPTI04=data.frame(date=TIC05$date,
                   Tavg=(TIC04$MaxTemp+TIC04$MinTemp)/2)
 # Take it to volumetric water content rather # than volumetric soil content, 
 # should be in m of water
-tau=9.3  # days
+tau=2  # days
 dt=1     # days time step
 kF=.015  # Table 2
 # Initialize MF and DF
@@ -621,7 +621,7 @@ DPTI04$MF=0
 DPTI04$DF=0
 
 # Spread your P Fertilizer on ~May 1, ~August 1, and ~October 1
-#DPTI04$MF[(format(DPTI04$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
+DPTI04$MF[(format(DPTI04$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
 
 # Remember what we say about attaching! 
 attach(DPTI04)
@@ -651,7 +651,7 @@ DPTI03=data.frame(date=TIC03$date,
                   Tavg=(TIC03$MaxTemp+TIC03$MinTemp)/2)
 # Take it to volumetric water content rather # than volumetric soil content, 
 # should be in m of water
-tau=9.3  # days
+tau=2  # days
 dt=1     # days time step
 kF=.015  # Table 2
 # Initialize MF and DF
@@ -659,7 +659,7 @@ DPTI03$MF=0
 DPTI03$DF=0
 
 # Spread your P Fertilizer on ~May 1, ~August 1, and ~October 1
-#DPTI03$MF[(format(DPTI03$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
+DPTI03$MF[(format(DPTI03$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
 
 # Remember what we say about attaching! 
 attach(DPTI03)
@@ -694,7 +694,7 @@ DPTI02=data.frame(date=TIC02$date,
                   Tavg=(TIC02$MaxTemp+TIC02$MinTemp)/2)
 # Take it to volumetric water content rather # than volumetric soil content, 
 # should be in m of water
-tau=9.3  # days
+tau=2  # days
 dt=1     # days time step
 kF=.015  # Table 2
 # Initialize MF and DF
@@ -702,7 +702,7 @@ DPTI02$MF=0
 DPTI02$DF=0
 
 # Spread your P Fertilizer on ~May 1, ~August 1, and ~October 1
-#DPTI02$MF[(format(DPTI02$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
+DPTI02$MF[(format(DPTI02$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
 
 # Remember what we say about attaching! 
 attach(DPTI02)
@@ -729,10 +729,10 @@ plot(DPTI02$date,DPTI02$DF)
 # Temperature
 DPTI01=data.frame(date=TIC01$date,
                   Rt=TIC01$Qpred/1000, 
-                  Tavg=(TIC01$MaxTemp+TIC01$MinTemp)/2)
+                  Tavg=(TIC01$MaxTemp+TIC01$MinTemp)/2)+5
 # Take it to volumetric water content rather # than volumetric soil content, 
 # should be in m of water
-tau=9.3  # days
+tau=2  # days
 dt=1     # days time step
 kF=.015  # Table 2
 # Initialize MF and DF
@@ -740,7 +740,7 @@ DPTI01$MF=0
 DPTI01$DF=0
 
 # Spread your P Fertilizer on ~May 1, ~August 1, and ~October 1
-#DPTI01$MF[(format(DPTI01$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
+DPTI01$MF[(format(DPTI01$date,"%j") %in% c(121,213,274))]=5.4*10^-4 #mg/m^2 P
 
 # Remember what we say about attaching! 
 attach(DPTI01)
@@ -914,11 +914,19 @@ DPLT$LT=DPLT$LB +
   TIC01$area*(DPTI01$DF + DPTI01$DS)
 
 setwd("~/2023/BSE5304Labs11/pdfs/Lab11")
-png("DPLTplotbase.png")
-plot(DPLT$date,DPLT$LT, type="l",ylim=c(1,10),xlab="",ylab="");
+png("DPLTplot_tau2.png")
+plot(DPLT$date,DPLT$LT, type="l",xlab="",ylab="");
 title("Total P Loss Over Watershed", xlab="Date", ylab="P Loss (kg/day)")
 dev.off()
 
+sum(DPLT$LT)
 
 
-
+PLossModel()
+PLossModel(RunoffModel=TIC04, TI=4, TIC_rast=TIC_loss)
+PLossModel(RunoffModel=TIC03, TI=3, TIC_rast=TIC_loss)
+PLossModel(RunoffModel=TIC02, TI=2, TIC_rast=TIC_loss)
+PLossModel(RunoffModel=TIC01, TI=1, TIC_rast=TIC_loss)
+png("ReclassifedPLoss.png")
+plot(TIC_loss); title("Average P Loss by TI Class")
+dev.off()
